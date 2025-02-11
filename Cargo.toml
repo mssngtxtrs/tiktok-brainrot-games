@@ -1,0 +1,6 @@
+[package]
+name = "tiktok-brainrot-games"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
