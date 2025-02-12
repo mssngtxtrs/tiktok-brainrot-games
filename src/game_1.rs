@@ -6,7 +6,9 @@ use ::rand::{Rng, rng};
 //----CONSTANTS----
 //
 const BALLS_SPEED: f32 = 0.6; //hehe balls hehehe
+const BALLS_RADIUS: f32 = 8.;
 const PLAYER_SPEED: f32 = 1.2;
+const PLAYER_RADIUS: f32 = 20.;
 const WORLD_RADIUS: f32 = 250.;
 const BORDER_RADIUS: f32 = 2.;
 
@@ -23,14 +25,16 @@ struct Player {
 struct Ball {
     circle: Circle,
     direction: Vec2,
-    collided: bool
+    collided: bool,
+    color: Color
 }
 
 //--Game1--
 pub struct Game1 {
     player: Player,
     balls: Vec<Ball>,
-    world: Circle
+    world: Circle,
+    color_delta: f32
 }
 
 
@@ -45,10 +49,11 @@ impl Game1 {
         let mut game = Self{
             player: Player::new(vec2(rng.random_range(-4. .. 4.), rng.random_range(-2. .. 2.))),
             balls: vec!(),
-            world: Circle::new(screen_width() / 2., screen_height() / 2., WORLD_RADIUS)
+            world: Circle::new(screen_width() / 2., screen_height() / 2., WORLD_RADIUS),
+            color_delta: 0.
         };
 
-        game.balls.push(Ball::new(vec2(rng.random_range(-1. .. 1.), rng.random_range(-1. .. 1.))));
+        game.balls.push(Ball::new(vec2(rng.random_range(-1. .. 1.), rng.random_range(-1. .. 1.)), 0.));
 
         game
     }
@@ -65,29 +70,41 @@ impl Game1 {
     //----UPDATE----
     //
     pub fn update(&mut self) {
-        //Collision variable
+        //Collision variables
         let mut collision = false;
+        let mut balls_spawn = 1;
 
         //Moving player
         self.player.movement(&self.world);
 
+        //Remember balls amount
+        let balls_amount = self.balls.len();
+
         //Moving balls, checking for collision with player
         for ball in &mut self.balls {
             ball.movement();
-            if ball.collide(&self.player) {
+            if !ball.collide(&self.world) {
+                ball.collided = true;
+                if balls_amount == 1 {
+                    collision = true;
+                }
+            }
+            if ball.collide(&self.player.circle) {
                 ball.collided = true;
                 collision = true;
+                balls_spawn += 1;
             }
         }
 
         //Deleting collided balls
-        self.balls.retain(|ball| ball.collided);
+        self.balls.retain(|ball| !ball.collided);
 
         //Creating 2 new balls onm collision
         if collision {
-            for _ in 0 .. 2 {
+            for _ in 0 .. balls_spawn {
+                self.color_delta = (self.color_delta + 0.05) % 1.;
                 let mut rng = rng();
-                self.balls.push(Ball::new(vec2(rng.random_range(-1. .. 1.), rng.random_range(-1. .. 1.))));
+                self.balls.push(Ball::new(vec2(rng.random_range(-1. .. 1.), rng.random_range(-1. .. 1.)), self.color_delta));
             }
         }
 
@@ -120,7 +137,7 @@ impl Player {
     //--New player--
     fn new(direction: Vec2) -> Self {
         Self {
-            circle: Circle::new(screen_width() / 2., screen_height() / 2. + 30., 10.),
+            circle: Circle::new(screen_width() / 2., screen_height() / 2. + 30., PLAYER_RADIUS),
             direction
         }
     }
@@ -131,18 +148,18 @@ impl Player {
         self.direction += vec2(0. * get_frame_time(), 4.9 * get_frame_time());
 
         //Actually moving
-        if world.contains(&(self.circle.point() + self.direction)) {      //If inbounds
-            self.circle.move_to((self.circle.point() + self.direction));
-        } else {                                                               //If not
+        if !world.overlaps(&(self.circle)) {    /*If out of bounds*/
             //Finding collision normal (in this case: player position)
-            let normal = self.circle.point() - vec2(screen_width() / 2., screen_height() / 2.);
+            let normal = -self.circle.point();
 
-            self.direction = -self.direction * normal.normalize_or_zero() * PLAYER_SPEED;
+            //Mirror
+            self.direction = normal.normalize_or_zero().rotate(self.direction);
 
             //Moving to a new direction
             self.circle.move_to(self.circle.point() + self.direction);
+        } else {    /*if inbounds*/
+            self.circle.move_to(self.circle.point() + self.direction);
         }
-        //Changing direction on colliding with borders
     }
 
     //--Drawing--
@@ -154,26 +171,27 @@ impl Player {
 //--Ball--
 impl Ball {
     //--New ball--
-    fn new(direction: Vec2) -> Self {
+    fn new(direction: Vec2, color_delta: f32) -> Self {
         Self {
-            circle: Circle::new(screen_width() / 2., screen_height() / 2., 4.),
+            circle: Circle::new(screen_width() / 2., screen_height() / 2., BALLS_RADIUS),
             direction,
-            collided: false
+            collided: false,
+            color: Color::new(1., 1. - color_delta, color_delta, 1.)
         }
     }
 
     //--Moving--
     fn movement(&mut self) {
-        self.circle.move_to(self.circle.point() * self.direction);
+        self.circle.move_to(self.circle.point() + self.direction);
     }
 
     //--Collision check--
-    fn collide(&self, player: &Player) -> bool {
-        player.circle.overlaps(&self.circle)
+    fn collide(&self, collider: &Circle) -> bool {
+        collider.overlaps(&self.circle)
     }
 
     //--Drawing--
     fn draw(&self) {
-        draw_circle(self.circle.x, self.circle.y, self.circle.r, YELLOW);
+        draw_circle(self.circle.x, self.circle.y, self.circle.r, self.color);
     }
 }
