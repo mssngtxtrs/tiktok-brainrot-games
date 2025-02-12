@@ -6,7 +6,14 @@ use macroquad::prelude::*;
 //----CONSTANTS----
 //
 const DELAY: f32 = 0.3;
-const GAME_NAMES: [&str; 3] = ["BALL EATER", "Bouncing", "Bouncing with reverse"];
+const GAME_NAMES: [&str; 3] = ["BALL EATER", "(WIP) Bouncing", "(WIP) Bouncing, reverse"];
+/*----GAME LIST----
+1. BALL EATER (Complete, debugging)
+    Player ball eats other balls
+2. Bouncing (WIP)
+    Player ball trying to escape from several semicircles
+3. Bouncing, reverse (WIP)
+ */
 
 
 //----STRUCTURES----

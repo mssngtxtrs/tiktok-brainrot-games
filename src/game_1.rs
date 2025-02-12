@@ -148,7 +148,7 @@ impl Player {
         self.direction += vec2(0. * get_frame_time(), 4.9 * get_frame_time());
 
         //Actually moving
-        if !world.overlaps(&(self.circle)) {    /*If out of bounds*/
+        if !Circle::new(world.x, world.y, world.r - self.circle.r * 2.).overlaps(&(self.circle)) {    /*If out of bounds*/
             //Finding collision normal (in this case: player position)
             let normal = -self.circle.point();
 
