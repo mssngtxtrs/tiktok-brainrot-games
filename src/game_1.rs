@@ -5,9 +5,7 @@ use ::rand::{Rng, rng};
 
 //----CONSTANTS----
 //
-const BALLS_SPEED: f32 = 0.6; //hehe balls hehehe
 const BALLS_RADIUS: f32 = 8.;
-const PLAYER_SPEED: f32 = 1.2;
 const PLAYER_RADIUS: f32 = 20.;
 const WORLD_RADIUS: f32 = 250.;
 const BORDER_RADIUS: f32 = 2.;
@@ -148,16 +146,16 @@ impl Player {
         self.direction += vec2(0. * get_frame_time(), 4.9 * get_frame_time());
 
         //Actually moving
-        if !Circle::new(world.x, world.y, world.r - self.circle.r * 2.).overlaps(&(self.circle)) {    /*If out of bounds*/
+        if Circle::new(world.x, world.y, world.r - self.circle.r).contains(&(self.circle.point() + self.direction)) {
+            self.circle.move_to(self.circle.point() + self.direction);
+        } else {
             //Finding collision normal (in this case: player position)
-            let normal = -self.circle.point();
+            let normal = -(self.circle.point() - world.point()).normalize_or_zero();
 
             //Mirror
-            self.direction = normal.normalize_or_zero().rotate(self.direction);
+            self.direction = normal.rotate(self.direction);
 
             //Moving to a new direction
-            self.circle.move_to(self.circle.point() + self.direction);
-        } else {    /*if inbounds*/
             self.circle.move_to(self.circle.point() + self.direction);
         }
     }

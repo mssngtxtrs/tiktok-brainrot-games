@@ -30,8 +30,8 @@ enum Window{
 fn conf() -> Conf {
     Conf {
         window_title: "TikTok brainrot games".to_string(),
-        window_width: 800,
-        window_height: 600,
+        window_width: 1600,
+        window_height: 1200,
         window_resizable: false,
         high_dpi: true,
         fullscreen: false,
@@ -72,10 +72,12 @@ async fn main() {
         clear_background(BLACK);
 
 
-        //----INPUT HANDLE----
+        //----WINDOW PROCESSING----
         //
         match current_window {
-            Window::MainMenu => { match menu.input_handle() {
+            Window::MainMenu => {
+                //--Input handle--
+                match menu.input_handle() {
                     true => { match menu.current {
                             0 => { current_window = Window::FirstGame; }
                             _ => {}
@@ -83,30 +85,29 @@ async fn main() {
                     }
                     _ => {}
                 };
+
+                //--Update--
+                menu.update();
+
+                //--Render--
+                menu.render();
             }
-            Window::FirstGame => { match game1.input_handle() {
+            Window::FirstGame => {
+                //--Input handle--
+                match game1.input_handle() {
                     true => {
                         current_window = Window::MainMenu;
                         game1 = Game1::new();
                     }
                     _ => {}
                 }
+
+                //--Update--
+                game1.update();
+
+                //--Render--
+                game1.render();
             }
-        }
-
-
-        //----UPDATE----
-        //
-        match current_window {
-            Window::MainMenu => { menu.update(); }
-            Window::FirstGame => { game1.update(); }
-        }
-
-        //----RENDER----
-        //
-        match current_window {
-            Window::MainMenu => { menu.render(); }
-            Window::FirstGame => { game1.render(); }
         }
 
 
